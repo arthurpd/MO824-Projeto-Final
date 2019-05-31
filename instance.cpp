@@ -56,7 +56,7 @@ namespace CVRP2L
 			fscanf(fin, " %*d %d", &m[i]);
 			items[i].resize(m[i]);
 			for (int j = 0; j < m[i]; j++)
-				fscanf(fin, " %d %d", &items[i][j].first, &items[i][j].second);
+				fscanf(fin, " %d %d", &items[i][j].h, &items[i][j].w);
 		}
 
 		fclose(fin);
@@ -72,7 +72,7 @@ namespace CVRP2L
 
 		for (int i = 0; i < n; i++, printf("\n"))
 			for (int j = 0; j < m[i]; j++)
-				printf("(%d %d) ", items[i][j].first, items[i][j].second);
+				printf("(%d %d) ", items[i][j].w, items[i][j].h);
 
 		for (int i = 0; i < n; i++)
 			printf("%d ", d[i]);

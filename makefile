@@ -9,7 +9,7 @@ OBJFILES = $(patsubst %.cpp,%.o,$(CPPFILES))
 CPPFLAGS= -g -std=c++11 -march=native -O2 -w -m64 -no-pie -Wall -Wextra -I$(QSOPT) -I$(CONCORDE)
 LDFLAGS= -L$(CONCORDE) -L$(QSOPT) -lconcorde -lqsopt -lm -lpthread -ldl
 
-SRCDIR = .
+SRCDIR = . packing
 
 EXEFILE = main.exe
 
