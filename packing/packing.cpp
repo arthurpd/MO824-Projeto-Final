@@ -1,4 +1,5 @@
 #include "packing.hpp"
+#include "../utils.hpp"
 
 namespace CVRP2L
 {
@@ -125,9 +126,11 @@ int packing_2d_solver::heuristic_pack(std::vector<rect> rl)
 
 		if (best_fit >= 0)
 		{
-			for (int xi = m.xi; xi < m.xi + rl[best_fit].w; xi++)
-				for (int yi = m.yi; yi < m.yi + rl[best_fit].h; yi++)
-					mat[xi][yi] = 'a' + cnt;
+			if (packing_2d_solver::verbose)
+				for (int xi = m.xi; xi < m.xi + rl[best_fit].w; xi++)
+					for (int yi = m.yi; yi < m.yi + rl[best_fit].h; yi++)
+						mat[xi][yi] = 'a' + cnt;
+
 			cnt++;
 
 			covered_area += rl[best_fit].area();
@@ -136,17 +139,25 @@ int packing_2d_solver::heuristic_pack(std::vector<rect> rl)
 		}
 	}
 
-	for (int i = 0; i < cvrp2l.vw; i++, printf("\n"))
-		for (int j = 0; j < cvrp2l.vh; j++)
-			printf("%c", mat[i][j]);
+	if (packing_2d_solver::verbose)
+	{
+		for (int i = 0; i < cvrp2l.vw; i++)
+		{
+			for (int j = 0; j < cvrp2l.vh; j++)
+				utils::log << mat[i][j];
+			utils::log << std::endl;
+		}
 
-	printf("%d\n", covered_area);
+		utils::log << covered_area << std::endl;
+	}
 
 	return covered_area;
 }
 
 bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 {
+	utils::code_timer t;
+
 	int total_area = 0;
 	std::vector<rect> rl;
 	for (int i : items_idx)
@@ -157,8 +168,27 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 		}
 
 	if (total_area > cvrp2l.vw * cvrp2l.vh)
+	{
+		utils::total_packing_time += t.seconds();
 		return false;
+	}
 
+	assert(is_sorted(items_idx.begin(), items_idx.end()));
+	int **x = root.get(0, items_idx);
+	if (*x != nullptr)
+	{
+		if (**x == 1)
+			return true;
+		else if (**x == 0)
+			return false;
+		else
+			(**x)++;
+	}
+	else
+	{
+		*x = new int(-std::max((int) (2 * rl.size()), 200 - ((200 * total_area) / (cvrp2l.vw * cvrp2l.vh))));
+	}
+	
 	std::random_shuffle(rl.begin(), rl.end());
 	int best_area = heuristic_pack(rl);
 
@@ -176,7 +206,8 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 		}
 	}
 
-	printf("\nStarting random search\n\n");
+	if (packing_2d_solver::verbose)
+		utils::log << "\nStarting random search\n\n";
 
 	int max_iter = rl.size();
 	int iter = 0;
@@ -195,7 +226,10 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 		}
 	}
 
+	if (best_area == total_area)
+		**x = 1;
 
+	utils::total_packing_time += t.seconds();
 	return best_area == total_area;
 }
 

@@ -1,4 +1,5 @@
 #include "instance.hpp"
+#include "utils.hpp"
 
 namespace CVRP2L
 {
@@ -44,7 +45,7 @@ namespace CVRP2L
 
 		for (int i = 0; i < n; i++)
 			for (int j = 0; j < n; j++)
-				dist[i][j] = sqrt((x[i] - x[j])*(x[i] - x[j]) + (y[i] - y[j])*(y[i] - y[j]));
+				dist[i][j] = ceil(sqrt((x[i] - x[j])*(x[i] - x[j]) + (y[i] - y[j])*(y[i] - y[j])) * 1000.0);
 
 		flush_line(fin);
 		fscanf(fin, "        ");
@@ -64,18 +65,25 @@ namespace CVRP2L
 
 	void instance::print()
 	{
-		printf("%d %d\n", n, v);
-		printf("%d %d %d\n", vc, vh, vw);
-		for (int i = 0; i < n; i++, printf("\n"))
+		utils::log << n << " " << v << std::endl;
+		utils::log << vc << " " << vh << " " << vw << std::endl;
+		for (int i = 0; i < n; i++, printf("\n"))\
+		{
 			for (int j = 0; j < n; j++)
-				printf("%d ", dist[i][j]);
+				utils::log << dist[i][j] << " ";
+			utils::log << std::endl;
+		}
 
 		for (int i = 0; i < n; i++, printf("\n"))
+		{
 			for (int j = 0; j < m[i]; j++)
-				printf("(%d %d) ", items[i][j].w, items[i][j].h);
+				utils::log << "(" << items[i][j].w << " " << items[i][j].h << ") ";
+			utils::log << std::endl;
+		}
 
 		for (int i = 0; i < n; i++)
-			printf("%d ", d[i]);
-		printf("\n");
+			utils::log << d[i] << " ";
+
+		utils::log << std::endl;
 	}
 }

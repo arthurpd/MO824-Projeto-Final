@@ -19,6 +19,8 @@ class instance
 {
 	static void flush_line(FILE *fp);
 
+	static const bool verbose = true;
+
 public:
 	// Number of vertices.
 	int n;

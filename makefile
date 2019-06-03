@@ -9,20 +9,20 @@ OBJFILES = $(patsubst %.cpp,%.o,$(CPPFILES))
 CPPFLAGS= -g -std=c++11 -march=native -O2 -w -m64 -no-pie -Wall -Wextra -I$(QSOPT) -I$(CONCORDE)
 LDFLAGS= -L$(CONCORDE) -L$(QSOPT) -lconcorde -lqsopt -lm -lpthread -ldl
 
-SRCDIR = . packing
+SRCDIR = . packing tsp
 
 EXEFILE = main.exe
 
 all: $(EXEFILE)
 
 $(EXEFILE): $(OBJFILES)
-	$(CXX) $(OBJFILES) -o $@ $(LDFLAGS)
+	$(CXX) $(OBJFILES) -o $@ $(CPPFLAGS) $(LDFLAGS)
 
 %.o: %.cpp
-	$(CXX) -c $< -o $@ $(CFLAGS)
+	$(CXX) -c $< -o $@ $(CPPFLAGS)
 
 clean:
 	rm -f $(OBJFILES) $(EXEFILE)
 
 run:
-	./main.exe instances/2l_cvrp0101.txt
+	./main.exe instances/2l_cvrp0102.txt
