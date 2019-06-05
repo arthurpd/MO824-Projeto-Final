@@ -157,7 +157,7 @@ int tsp_solver::solve(const std::vector<int> &vertices_idx)
 	int ans = -1;
 	if (n >= 15)
 	 	solving_tsp_concorde(dist, tour);
-	else if (n > 4)
+	else if (n >= 4)
 	 	ans = solve_tsp_dp(dist, tour);
 	else
 		solve_tsp_brute(dist, tour);

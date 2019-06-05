@@ -9,7 +9,7 @@ OBJFILES = $(patsubst %.cpp,%.o,$(CPPFILES))
 CPPFLAGS= -g -std=c++11 -march=native -O2 -w -m64 -no-pie -Wall -Wextra -I$(QSOPT) -I$(CONCORDE)
 LDFLAGS= -L$(CONCORDE) -L$(QSOPT) -lconcorde -lqsopt -lm -lpthread -ldl
 
-SRCDIR = . packing tsp
+SRCDIR = . packing tsp input_reader tabu_search
 
 EXEFILE = main.exe
 
@@ -25,4 +25,6 @@ clean:
 	rm -f $(OBJFILES) $(EXEFILE)
 
 run:
-	./main.exe instances/2l_cvrp0102.txt
+	./main.exe instances/2l_cvrp0102.txt 0.1
+	cat 2lcvrp_log.txt
+

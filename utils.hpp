@@ -28,21 +28,21 @@ public:
 	}
 };
 
-
-template<class T>
-struct trie_node {
+template <class T>
+struct trie_node
+{
 	T *val;
 	std::unordered_map<int, trie_node *> tab;
 
-	trie_node() : val(nullptr) {
-
+	trie_node() : val(nullptr)
+	{
 	}
 
 	T **get(int i, const std::vector<int> &key)
 	{
 		if (i == key.size())
 			return &val;
-		
+
 		trie_node *&prox = tab[key[i]];
 		if (prox == NULL)
 			prox = new trie_node();

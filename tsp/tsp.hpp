@@ -1,7 +1,7 @@
 #ifndef TSP_HPP
 #define TSP_HPP
 
-#include "../instance.hpp"
+#include "../input_reader/instance.hpp"
 #include "../utils.hpp"
 
 namespace CVRP2L
@@ -13,7 +13,7 @@ class tsp_solver
 	utils::trie_node<int> root;
 
 public:
-	bool verbose;
+	bool verbose = false;
 
 	tsp_solver(instance &inst);
 

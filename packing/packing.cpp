@@ -126,7 +126,7 @@ int packing_2d_solver::heuristic_pack(std::vector<rect> rl)
 
 		if (best_fit >= 0)
 		{
-			if (packing_2d_solver::verbose)
+			if (verbose)
 				for (int xi = m.xi; xi < m.xi + rl[best_fit].w; xi++)
 					for (int yi = m.yi; yi < m.yi + rl[best_fit].h; yi++)
 						mat[xi][yi] = 'a' + cnt;
@@ -139,7 +139,7 @@ int packing_2d_solver::heuristic_pack(std::vector<rect> rl)
 		}
 	}
 
-	if (packing_2d_solver::verbose)
+	if (verbose)
 	{
 		for (int i = 0; i < cvrp2l.vw; i++)
 		{
@@ -186,9 +186,9 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 	}
 	else
 	{
-		*x = new int(-std::max((int) (2 * rl.size()), 200 - ((200 * total_area) / (cvrp2l.vw * cvrp2l.vh))));
+		*x = new int(-std::max((int)(2 * rl.size()), 200 - ((200 * total_area) / (cvrp2l.vw * cvrp2l.vh))));
 	}
-	
+
 	std::random_shuffle(rl.begin(), rl.end());
 	int best_area = heuristic_pack(rl);
 
@@ -206,7 +206,7 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 		}
 	}
 
-	if (packing_2d_solver::verbose)
+	if (verbose)
 		utils::log << "\nStarting random search\n\n";
 
 	int max_iter = rl.size();
