@@ -96,47 +96,36 @@ void tabu_search::init_run()
 	over_route_limit_penalty = 1e6;
 }
 
-double tabu_search::evaluate_relocation_move(int i, int j, int k)
-{
-	assert(i != k);
-
-	if (cur_sol.route_demand[k] + cvrp2l.d[cur_sol.routes[i][j]] > cvrp2l.vc)
-		return infd;
-
-	vector<int> to_route = cur_sol.routes[k];
-	to_route.insert(lower_bound(to_route.begin(), to_route.end(), cur_sol.routes[i][j]), cur_sol.routes[i][j]);
-
-	if (!packing_solver.feasible(to_route))
-		return infd;
-
-	vector<int> from_route = cur_sol.routes[i];
-	from_route.erase(from_route.begin() + j);
-
-	double retv = 0;
-	retv += tsp_sol.solve(from_route) + tsp_sol.solve(to_route) - tsp_sol.solve(cur_sol.routes[i]) - tsp_sol.solve(cur_sol.routes[k]);
-
-	retv += over_route_limit_penalty * (solution::get_over_route_limit_penalty(k, cvrp2l) - solution::get_over_route_limit_penalty(i, cvrp2l));
-
-	return retv;
-}
-
-void tabu_search::apply_relocation_move(int i, int j, int k)
-{
-	insert_tabu(cur_sol.routes[i][j]);
-	cur_sol.routes[k].insert(lower_bound(cur_sol.routes[k].begin(), cur_sol.routes[k].end(), cur_sol.routes[i][j]), cur_sol.routes[i][j]);
-	cur_sol.routes[i].erase(cur_sol.routes[i].begin() + j);
-	assert(is_sorted(cur_sol.routes[k].begin(), cur_sol.routes[k].end()));
-
-	solution::evaluate_sol(cur_sol, tsp_sol, cvrp2l);
-}
-
 bool tabu_search::neighborhood_move()
 {
-	relocation_neighborhood n1(*this, cur_sol, cvrp2l, tsp_sol, packing_solver);
+	relocation_neighborhood nr(*this, cur_sol, cvrp2l, tsp_sol, packing_solver);
 
-	if (n1.best_move_improvement() < infd)
+	swap_neighborhood ns(*this, cur_sol, cvrp2l, tsp_sol, packing_solver);
+
+	eject_neighborhood ne(*this, cur_sol, cvrp2l, tsp_sol, packing_solver);
+
+	vector<pair<double, neighborhood *>> neighborhoods;
+	neighborhoods.push_back({nr.best_move_improvement(), &nr});
+
+	if (best_sol.feasible)
 	{
-		n1.apply_best_move();
+		if ((iteration / 100) % 10 == 0)
+		{
+			neighborhoods.push_back({ns.best_move_improvement(), &ns});
+			if (iteration % 100 >= 90)
+				neighborhoods.push_back({ne.best_move_improvement(), &ne});
+		}
+	}
+
+	utils::log << neighborhoods.front().first << " " << (neighborhoods.size() > 1 ? neighborhoods[1] : neighborhoods[0]).first << " " << neighborhoods.back().first << endl;
+
+	sort(neighborhoods.begin(), neighborhoods.end());
+
+	if (neighborhoods.front().first < infd)
+	{
+		utils::log << cur_sol.val << " ";
+		neighborhoods.front().second->apply_best_move();
+		utils::log << cur_sol.val << endl;
 		return true;
 	}
 	else
@@ -145,9 +134,14 @@ bool tabu_search::neighborhood_move()
 
 tabu_search::tabu_search(instance &inst, tsp_solver &tsp, packing_2d_solver &packing) : cvrp2l(inst), tsp_sol(tsp), packing_solver(packing) {}
 
-bool tabu_search::is_tabu(int x)
+bool tabu_search::is_tabu(int i, int j)
 {
-	return tabu_tab[x] == 0;
+	return tabu_tab[cur_sol.routes[i][j]] != 0;
+}
+
+int pick(int a, int b)
+{
+	return a + (rand() % (b - a + 1));
 }
 
 solution tabu_search::run(double time_limit, int tabu_tenure)
@@ -157,6 +151,9 @@ solution tabu_search::run(double time_limit, int tabu_tenure)
 
 	while (exec_time.seconds() < time_limit)
 	{
+		if (iteration % 100 == 0)
+			tabu_tenure = pick(ceil(cvrp2l.n/16.0), ceil(cvrp2l.n/4.0));
+
 		remove_old_tabu(tabu_tenure);
 		neighborhood_move();
 
@@ -171,8 +168,10 @@ solution tabu_search::run(double time_limit, int tabu_tenure)
 			over_route_limit_penalty *= 1.05;
 		over_route_limit_penalty = max(1e-12, min(over_route_limit_penalty, 1e12));
 
-		utils::log << "iter " << iteration++ << " val " << best_sol.val << " feasible " << best_sol.feasible << " cur feas " << cur_sol.feasible << " penalty " << over_route_limit_penalty << endl;
+		iteration++;
+		utils::log << "iter " << iteration << " val " << best_sol.val << " feasible " << best_sol.feasible << " cur feas " << cur_sol.feasible << " penalty " << over_route_limit_penalty << endl;
 	}
+
 
 	return best_sol;
 }

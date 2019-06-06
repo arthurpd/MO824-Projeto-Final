@@ -70,7 +70,7 @@ public:
 
 	tabu_search(instance &inst, tsp_solver &tsp, packing_2d_solver &packing);
 
-	bool is_tabu(int x);
+	bool is_tabu(int i, int j);
 
 	void insert_tabu(int x);
 

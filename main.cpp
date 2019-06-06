@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 	}
 
 	CVRP2L::tabu_search search(cvrp2l, tsp_solver, packing_solver);
-	CVRP2L::solution best_sol = search.run(atof(argv[2]), ceil(cvrp2l.n / 3.0));
+	CVRP2L::solution best_sol = search.run(atof(argv[2]), ceil(cvrp2l.n / 4.0));
 	best_sol.print();
 
 	// Following code checks solution (independently from the tabu search code).
