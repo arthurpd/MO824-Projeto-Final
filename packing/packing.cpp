@@ -187,6 +187,7 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 	else
 	{
 		*x = new int(-std::max((int)(2 * rl.size()), 200 - ((200 * total_area) / (cvrp2l.vw * cvrp2l.vh))));
+		assert(**x < 0);
 	}
 
 	std::random_shuffle(rl.begin(), rl.end());

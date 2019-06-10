@@ -6,7 +6,7 @@ namespace CVRP2L
 using namespace std;
 void solution::print()
 {
-	utils::log << "Value: " << val << " feasible: " << feasible << " v: " << v << endl;
+	utils::log << "Value: " << val << " vehicle_feasible: " << vehicle_feasible << " demand_feasible " << demand_feasible << " v: " << v << endl;
 	for (int i = 0; i < routes.size(); i++)
 	{
 		for (int j = 0; j < routes[i].size(); j++)
@@ -21,11 +21,14 @@ int solution::evaluate_sol(solution &sol, tsp_solver &tsp_sol, instance &cvrp2l)
 	for (int i = 0; i < sol.routes.size(); i++)
 		retv += tsp_sol.solve(sol.routes[i]);
 
+	sol.demand_feasible = true;
 	for (int i = 0; i < sol.routes.size(); i++)
 	{
 		sol.route_demand[i] = 0;
 		for (int j = 0; j < sol.routes[i].size(); j++)
 			sol.route_demand[i] += cvrp2l.d[sol.routes[i][j]];
+		if (sol.route_demand[i] > cvrp2l.vc)
+			sol.demand_feasible = false;
 	}
 
 	for (int i = 0; i < sol.routes.size(); i++)
@@ -33,9 +36,9 @@ int solution::evaluate_sol(solution &sol, tsp_solver &tsp_sol, instance &cvrp2l)
 			sol.v = i + 1;
 
 	if (sol.v <= cvrp2l.v)
-		sol.feasible = true;
+		sol.vehicle_feasible = true;
 	else
-		sol.feasible = false;
+		sol.vehicle_feasible = false;
 
 	return sol.val = retv;
 }
@@ -94,28 +97,22 @@ void tabu_search::init_run()
 
 	iteration = 0;
 	over_route_limit_penalty = 1e6;
+
+	over_demand_limit_penalty = 1e6;
 }
 
-bool tabu_search::neighborhood_move()
+bool tabu_search::neighborhood_move(bool include_swap, bool include_eject)
 {
 	relocation_neighborhood nr(*this, cur_sol, cvrp2l, tsp_sol, packing_solver);
 
-	swap_neighborhood ns(*this, cur_sol, cvrp2l, tsp_sol, packing_solver);
+	swap_neighborhood ns(*this, cur_sol, cvrp2l, tsp_sol, packing_solver, include_swap ? 1.0 : (2.0 / cvrp2l.n));
 
-	eject_neighborhood ne(*this, cur_sol, cvrp2l, tsp_sol, packing_solver);
+	eject_neighborhood ne(*this, cur_sol, cvrp2l, tsp_sol, packing_solver, include_eject ? 1.0 : 0.0);
 
 	vector<pair<double, neighborhood *>> neighborhoods;
 	neighborhoods.push_back({nr.best_move_improvement(), &nr});
-
-	if (best_sol.feasible)
-	{
-		if ((iteration / 100) % 10 == 0)
-		{
-			neighborhoods.push_back({ns.best_move_improvement(), &ns});
-			if (iteration % 100 >= 90)
-				neighborhoods.push_back({ne.best_move_improvement(), &ne});
-		}
-	}
+	neighborhoods.push_back({ns.best_move_improvement(), &ns});
+	neighborhoods.push_back({ne.best_move_improvement(), &ne});
 
 	utils::log << neighborhoods.front().first << " " << (neighborhoods.size() > 1 ? neighborhoods[1] : neighborhoods[0]).first << " " << neighborhoods.back().first << endl;
 
@@ -155,21 +152,43 @@ solution tabu_search::run(double time_limit, int tabu_tenure)
 			tabu_tenure = pick(ceil(cvrp2l.n/16.0), ceil(cvrp2l.n/4.0));
 
 		remove_old_tabu(tabu_tenure);
-		neighborhood_move();
 
-		if ((best_sol.feasible && cur_sol.feasible && cur_sol.val < best_sol.val) || (!best_sol.feasible && !cur_sol.feasible && cur_sol.val < best_sol.val) || (!best_sol.feasible && cur_sol.feasible))
+
+		if (best_sol.feasible() && (iteration / 100) % 10 == 0)
+		{
+			if (iteration % 100 >= 90)
+				neighborhood_move(true, true);
+			else
+			{
+				neighborhood_move(true, false);
+			}
+		}
+		else
+		{
+			neighborhood_move(false, false);
+		}
+
+
+		if ((best_sol.feasible() && cur_sol.feasible() && cur_sol.val < best_sol.val) || (!best_sol.feasible() && !cur_sol.feasible() && cur_sol.val < best_sol.val) || (!best_sol.feasible() && cur_sol.feasible()))
 		{
 			best_sol = cur_sol;
 		}
 
-		if (cur_sol.feasible)
+		if (cur_sol.vehicle_feasible)
 			over_route_limit_penalty *= 0.95;
 		else
 			over_route_limit_penalty *= 1.05;
 		over_route_limit_penalty = max(1e-12, min(over_route_limit_penalty, 1e12));
 
+		if (cur_sol.demand_feasible)
+			over_demand_limit_penalty *= 0.95;
+		else
+			over_demand_limit_penalty *= 1.05;
+		over_demand_limit_penalty = max(1e-12, min(over_demand_limit_penalty, 1e12));
+
 		iteration++;
-		utils::log << "iter " << iteration << " val " << best_sol.val << " feasible " << best_sol.feasible << " cur feas " << cur_sol.feasible << " penalty " << over_route_limit_penalty << endl;
+		utils::log << "iter " << iteration << " best_val " << best_sol.val << " feasible " << best_sol.feasible() << 
+			" cur_val " << cur_sol.val << " cur_df " << cur_sol.demand_feasible << " cur vf " << cur_sol.vehicle_feasible<< " dpenalty " << over_demand_limit_penalty << " vpenalty " << over_route_limit_penalty << endl;
 	}
 
 

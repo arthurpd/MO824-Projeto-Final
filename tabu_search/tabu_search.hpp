@@ -21,10 +21,18 @@ struct solution
 	int val;
 
 	// If the solution uses the required amount of vehicles. (The solution is always packing feasible)
-	bool feasible;
+	bool vehicle_feasible;
+
+	// If the vehicles are not over max capacity. (The solution is always packing feasible)
+	bool demand_feasible;
 
 	// Number of vehicles being used
 	int v;
+
+	bool feasible()
+	{
+		return vehicle_feasible && demand_feasible;
+	}
 
 	void print();
 
@@ -62,11 +70,13 @@ class tabu_search
 
 	void apply_relocation_move(int i, int j, int k);
 
-	bool neighborhood_move();
+	bool neighborhood_move(bool include_swap, bool include_eject);
 
 public:
 	// Penalty for using more vehicles than allowed.
 	double over_route_limit_penalty;
+
+	double over_demand_limit_penalty;
 
 	tabu_search(instance &inst, tsp_solver &tsp, packing_2d_solver &packing);
 

@@ -56,8 +56,10 @@ class swap_neighborhood : public neighborhood
 
 	double evaluate_swap_move(int i, int j, int k, int l);
 
+	double sample;
+
 public:
-	swap_neighborhood(tabu_search &s, solution &sol, instance &inst, tsp_solver &tsp, packing_2d_solver &packing) : neighborhood(s, sol, inst, tsp, packing) {}
+	swap_neighborhood(tabu_search &s, solution &sol, instance &inst, tsp_solver &tsp, packing_2d_solver &packing, double sam = 1.0) : neighborhood(s, sol, inst, tsp, packing), sample(sam) {}
 
 	double best_move_improvement();
 
@@ -77,8 +79,10 @@ class eject_neighborhood : public neighborhood
 
 	bool relocation_infeasible(int i, int j, int k);
 
+	double sample;
+
 public:
-	eject_neighborhood(tabu_search &s, solution &sol, instance &inst, tsp_solver &tsp, packing_2d_solver &packing) : neighborhood(s, sol, inst, tsp, packing) {}
+	eject_neighborhood(tabu_search &s, solution &sol, instance &inst, tsp_solver &tsp, packing_2d_solver &packing, double sam = 1.0) : neighborhood(s, sol, inst, tsp, packing), sample(sam) {}
 
 	double best_move_improvement();
 
