@@ -18,9 +18,18 @@ int main(int argc, char **argv)
 	freopen("/dev/null", "w", stdout);
 
 	// Write to file since we can't use stdout.
-	utils::log.open("2lcvrp_log.txt", std::ios::out | std::ios::trunc);
+	if (argc <= 3)
+		utils::log.open("2lcvrp_log.txt", std::ios::out | std::ios::trunc);
+	else
+		utils::log.open(argv[3], std::ios::out | std::ios::trunc);
 
-	assert(argc == 3);
+	ofstream sol;
+	if (argc <= 4)
+		sol.open("2lcvrp_sol.txt", std::ios::out | std::ios::trunc);
+	else
+		sol.open(argv[4], std::ios::out | std::ios::trunc);
+
+	assert(argc >= 3);
 	CVRP2L::instance cvrp2l(argv[1]);
 	if (verbose)
 		cvrp2l.print();
@@ -84,12 +93,15 @@ int main(int argc, char **argv)
 			utils::log << "Vehicles capacity violated" << endl;
 	}
 
+	sol << best_sol.val / 1000.0 << endl;
+
 	// Print time stats.
 	utils::log << "Total tsp time " << utils::total_tsp_time << endl;
 	utils::log << "Total packing time " << utils::total_packing_time << endl;
 
 	// Close log file.
 	utils::log.close();
+	sol.close();
 
 	return 0;
 }
