@@ -155,7 +155,7 @@ solution tabu_search::run(double time_limit, int tabu_tenure)
 	while (exec_time.seconds() < time_limit)
 	{
 		if (iteration % 100 == 0)
-			tabu_tenure = pick(ceil(cvrp2l.n/16.0), ceil(cvrp2l.n/4.0));
+			tabu_tenure = ceil(cvrp2l.n/(double) pick(4, 16));
 
 		remove_old_tabu(tabu_tenure);
 
@@ -238,7 +238,7 @@ solution tabu_search::run(double time_limit, int tabu_tenure)
 
 		iteration++;
 		utils::log << "iter " << iteration << " best_val " << best_sol.val << " feasible " << best_sol.feasible() << 
-			" cur_val " << cur_sol.val << " cur_df " << cur_sol.demand_feasible << " cur vf " << cur_sol.vehicle_feasible<< " dpenalty " << over_demand_limit_penalty << " vpenalty " << over_route_limit_penalty << endl;
+			" cur_val " << cur_sol.val << " cur_df " << cur_sol.demand_feasible << " cur vf " << cur_sol.vehicle_feasible<< " dpenalty " << over_demand_limit_penalty << " vpenalty " << over_route_limit_penalty << " tenure " << tabu_tenure << endl;
 	}
 
 

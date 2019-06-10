@@ -153,8 +153,10 @@ void swap_neighborhood::apply_best_move()
 {
 	int i = get<0>(best_move), j = get<1>(best_move), k = get<2>(best_move), l = get<3>(best_move);
 
-	ts.insert_tabu(cur_sol.routes[i][j]);
-	ts.insert_tabu(cur_sol.routes[k][l]);
+	if (rand() % 2)
+		ts.insert_tabu(cur_sol.routes[i][j]);
+	else
+		ts.insert_tabu(cur_sol.routes[k][l]);
 
 	int x = cur_sol.routes[i][j];
 	int y = cur_sol.routes[k][l];
