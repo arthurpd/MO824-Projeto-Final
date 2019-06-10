@@ -144,7 +144,10 @@ int tsp_solver::solve(const std::vector<int> &vertices_idx)
 	assert(is_sorted(vertices_idx.begin(), vertices_idx.end()));
 	int **x = root.get(0, vertices_idx);
 	if (*x != nullptr)
+	{
+		utils::total_tsp_time += t.seconds();
 		return **x;
+	}
 
 	int n = vertices_idx.size();
 	vector<vector<int>> dist(n, vector<int>(n, 0));

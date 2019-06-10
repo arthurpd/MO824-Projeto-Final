@@ -178,9 +178,15 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 	if (*x != nullptr)
 	{
 		if (**x == 1)
+		{
+			utils::total_packing_time += t.seconds();
 			return true;
+		}
 		else if (**x == 0)
+		{
+			utils::total_packing_time += t.seconds();
 			return false;
+		}
 		else
 			(**x)++;
 	}
