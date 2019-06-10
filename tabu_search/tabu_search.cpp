@@ -146,6 +146,12 @@ solution tabu_search::run(double time_limit, int tabu_tenure)
 	init_run();
 	utils::code_timer exec_time;
 
+	list<solution> mid_term_memory;
+
+	double intensification_period = cvrp2l.n; // In seconds.
+
+	bool final_intensify = false;
+	bool intensifying = false;
 	while (exec_time.seconds() < time_limit)
 	{
 		if (iteration % 100 == 0)
@@ -153,26 +159,70 @@ solution tabu_search::run(double time_limit, int tabu_tenure)
 
 		remove_old_tabu(tabu_tenure);
 
-
-		if (best_sol.feasible() && (iteration / 100) % 10 == 0)
+		if (exec_time.seconds() > 0.9 * time_limit)
 		{
-			if (iteration % 100 >= 90)
+			if (!final_intensify)
+			{
+				utils::log << "Starting Final Intensification" << endl;
+				// Go from best solution and clear tabu list.
+				cur_sol = best_sol;
+
+				// Reset penalties to a high value to avoid infeasible solutions at first.
+				over_route_limit_penalty = 1e6;
+				over_demand_limit_penalty = 1e6;
+				remove_old_tabu(0);
+			}
+
+			final_intensify = true;
+
+			if (exec_time.seconds() > 0.94 * time_limit && exec_time.seconds() < 0.97 * time_limit)
 				neighborhood_move(true, true);
 			else
-			{
-				neighborhood_move(true, false);
-			}
+				neighborhood_move(true, false);			
 		}
 		else
 		{
-			neighborhood_move(false, false);
-		}
+			double cur_cycle = exec_time.seconds() / intensification_period;
+			
+			if (cur_cycle > 1 && best_sol.feasible() && (cur_cycle - floor(cur_cycle) < 0.5))
+			{
+				if (!intensifying && mid_term_memory.size() > 0)
+				{
+					auto local_minimum = mid_term_memory.begin();
+					for (auto it = mid_term_memory.begin(); it != mid_term_memory.end(); it++)
+						if ((local_minimum->feasible() && it->feasible() && it->val < local_minimum->val)
+							|| (!local_minimum->feasible() && !it->feasible() && it->val < local_minimum->val)
+							|| (!local_minimum->feasible() && it->feasible()))
+						{
+							local_minimum = it;
+						}
+					
+					// Reset solution to local minimum a clear tabu list.
+					cur_sol = *local_minimum;
+					remove_old_tabu(0);
+					utils::log << "Starting periodic intensification" << endl;
+				}
 
+				intensifying = true;
+				neighborhood_move(true, false);
+			}
+			else
+			{
+				if (intensifying)
+					utils::log << "Stopping periodic intensification" << endl;
+				intensifying = false;
+				neighborhood_move(false, false);
+			}
+		}
 
 		if ((best_sol.feasible() && cur_sol.feasible() && cur_sol.val < best_sol.val) || (!best_sol.feasible() && !cur_sol.feasible() && cur_sol.val < best_sol.val) || (!best_sol.feasible() && cur_sol.feasible()))
 		{
 			best_sol = cur_sol;
 		}
+
+		mid_term_memory.push_back(cur_sol);
+		while (mid_term_memory.size() > cvrp2l.n)
+			mid_term_memory.pop_front();
 
 		if (cur_sol.vehicle_feasible)
 			over_route_limit_penalty *= 0.95;
