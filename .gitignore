@@ -32,4 +32,6 @@
 *.app
 *.ipch
 *.bin
+
 2lcvrp_log.txt
+*.log
