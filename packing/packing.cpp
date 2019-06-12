@@ -192,7 +192,7 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 	}
 	else
 	{
-		*x = new int(-std::max((int)(2 * rl.size()), 200 - ((200 * total_area) / (cvrp2l.vw * cvrp2l.vh))));
+		*x = new int(-std::max((int)(rl.size()), 100 - ((100 * total_area) / (cvrp2l.vw * cvrp2l.vh))));
 		assert(**x < 0);
 	}
 
@@ -203,35 +203,46 @@ bool packing_2d_solver::feasible(const std::vector<int> &items_idx)
 
 	for (auto criterion : sort_criteria)
 	{
-		std::vector<rect> rl_tmp = rl;
-		sort(rl_tmp.begin(), rl_tmp.end(), criterion);
-		int tmp_area = heuristic_pack(rl_tmp);
-		if (tmp_area > best_area)
+		if (best_area == total_area)
+			break;
+
+		std::vector<rect> rl_cur = rl;
+		sort(rl_cur.begin(), rl_cur.end(), criterion);
+		int cur_area = heuristic_pack(rl_cur);
+
+		if (cur_area > best_area)
 		{
-			best_area = tmp_area;
-			rl = rl_tmp;
+			best_area = cur_area;
+			rl = rl_cur;
+		}
+
+		if (verbose)
+			utils::log << "\nStarting random search\n\n";
+
+		int max_iter = rl_cur.size();
+		int iter = 0;
+		while (iter < max_iter && best_area < total_area)
+		{
+			iter++;
+
+			std::vector<rect> rl_tmp = rl_cur;
+			std::swap(rl_tmp[rand() % rl_tmp.size()], rl_tmp[rand() % rl_tmp.size()]);
+			int tmp_area = heuristic_pack(rl_tmp);
+			if (tmp_area > cur_area)
+			{
+				cur_area = tmp_area;
+				rl_cur = rl_tmp;
+				iter = 0;
+			}
+
+			if (cur_area > best_area)
+			{
+				best_area = cur_area;
+				rl = rl_cur;
+			}
 		}
 	}
 
-	if (verbose)
-		utils::log << "\nStarting random search\n\n";
-
-	int max_iter = rl.size();
-	int iter = 0;
-	while (iter < max_iter && best_area < total_area)
-	{
-		iter++;
-
-		std::vector<rect> rl_tmp = rl;
-		std::swap(rl_tmp[rand() % rl_tmp.size()], rl_tmp[rand() % rl_tmp.size()]);
-		int tmp_area = heuristic_pack(rl_tmp);
-		if (tmp_area > best_area)
-		{
-			best_area = tmp_area;
-			rl = rl_tmp;
-			iter = 0;
-		}
-	}
 
 	if (best_area == total_area)
 		**x = 1;
